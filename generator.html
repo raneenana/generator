@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        function genePromise(ms,cb){
+            return new Promise((resolve,reject) =>{
+                setTimeout(function(){
+                    cb()
+                    resolve(ms)
+                },ms)
+            })
+        }
+        function * generator() {
+            var a = yield genePromise(1000,()=>{console.log('第一次执行回调函数')});
+            console.log('a....', a)
+            var b = yield  genePromise(3000,()=>{console.log('第二次执行回调函数')});
+            console.log('b...',b)
+        }
+        // 第一次执行调用generator函数返回一个执行器
+        var gen = generator()
+
+        // next()函数返回一个对象 value表示yield后的表达式的值，done表示函数的执行状态（是否执行完成）
+        // console.log('第一次调用...',gen.next())  //{value:1,done:false}
+
+        // console.log('第二次调用...',gen.next())  //{value:2,done:false}
+        //如果第二次调用的时候next函数传入一个值得话 例如：console.log('第二次调用...',gen.next(100))，那么generator函数中的console.log('a...',a)的打印结果为a....,100  原因是：yield表达式的值是下一次执行next（）函数所传入的值
+
+        // 第三次返回undefined的原因是函数如果没有写return value的话函数会默认返回undefined故而value的值为undefined
+        // console.log('第三次调用...',gen.next())  //{value:undefined,done:true}
+
+        // 封装generator函数自执行器
+        function run(generator){
+            let gen = generator()
+            function next(data){
+                var result = gen.next(data)
+                // 判断generator函数是否执行结束
+                if(result.done){
+                    return result.value
+                }else{
+                    if(result.value.then){
+                        result.value.then(res => next(res))
+                    }else {
+                        next(result.value) 
+                    }
+                }
+            }
+            next()
+        }
+        run(generator)
+    </script>
+</body>
+</html>
